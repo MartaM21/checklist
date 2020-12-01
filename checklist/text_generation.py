@@ -11,6 +11,8 @@ import torch.nn.functional as F
 from pattern.en import wordnet, pluralize
 import requests
 import json
+# Customed import, in order to extend to SentiWordNet scores
+from nltk.corpus import sentiwordnet as swn
 
 def all_synsets(word, pos=None):
     map = {
