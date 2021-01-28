@@ -339,6 +339,7 @@ class Editor(object):
         else:
             return [tuple(x[0]) if len(x[0]) > 1 else x[0][0] for x in ret]
 
+# Customed
     def _wordnet_stuff(self, templates, word, type, threshold=5, depth=3, pos=None, **kwargs):
         texts = self.template(templates, **kwargs).data
         idxs = np.random.choice(len(texts), min(10, len(texts)), replace=False)
@@ -350,8 +351,24 @@ class Editor(object):
          'related': self.tg.related_words,
          'hypernyms': self.tg.more_general,
          'hyponyms': self.tg.more_specific,
+         'positive': self.tg.positive_syn,
+         'negative': self.tg.negative_syn,
+         'neutral': self.tg.neutral_syn
         }[type]
-        return [x[0][0] for x in fn(texts, word, threshold=threshold, pos=pos, depth=depth)]
+        if ((type == 'positive') or (type == 'negative') or (type == 'neutral')):
+            return[x[6:] for x in fn(texts, word, threshold=threshold, pos=pos, depth=depth)]
+        else:
+            return [x[0][0] for x in fn(texts, word, threshold=threshold, pos=pos, depth=depth)]
+
+# Recalling the new functions in text_generation (using the lexical resource SentiWordNet)
+    def positive(self, templates, word, threshold=5, **kwargs):
+        return self._wordnet_stuff(templates, word, 'positive', threshold=threshold, **kwargs)
+    
+    def negative(self, templates, word, threshold=5, **kwargs):
+        return self._wordnet_stuff(templates, word, 'negative', threshold=threshold, **kwargs)
+    
+    def neutral(self, templates, word, threshold=5, **kwargs):
+        return self._wordnet_stuff(templates, word, 'neutral', threshold=threshold, **kwargs)
 
     def antonyms(self, templates, word, threshold=5, **kwargs):
         """Find antonyms of word that fit in templates
@@ -693,9 +710,9 @@ class Editor(object):
             # print(mapping)
             data.append(recursive_format(templates, mapping))
             meta.append(mapping)
-        if unroll and data and type(data[0]) in [list, np.array, np.ndarray, tuple]:
-            meta = [z for y, z in zip(data, meta) for x in y]
+        if unroll and data and type(data[0]) in [list, np.array, tuple]:
             data = [x for y in data for x in y]
+            meta = [x for y in meta for x in y]
         if use_meta:
             ret.meta = meta
         if added_labels:

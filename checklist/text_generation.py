@@ -14,6 +14,8 @@ import json
 # Customed import, in order to extend to SentiWordNet scores
 from nltk.corpus import sentiwordnet as swn
 
+# Passing ('cry','VERB')
+# Return [Synset('shout.v.02'), Synset('cry.v.02'), ...]
 def all_synsets(word, pos=None):
     map = {
         'NOUN': wordnet.NOUN,
@@ -30,14 +32,40 @@ def all_synsets(word, pos=None):
         ret.extend(wordnet.synsets(word, pos=pos))
     return ret
 
+# It is called within all_possible_synonyms
 def clean_senses(synsets):
     return [x for x in set(synsets) if '_' not in x]
+
+# Return ['shoot', 'weep', '...']
 def all_possible_synonyms(word, pos=None):
     ret = []
     for syn in all_synsets(word, pos=pos):
         # if syn.synonyms[0] != word:
         #     continue
         ret.extend(syn.senses)
+    return clean_senses(ret)
+
+# Custom
+def all_possible_positive_syn(word, pos=None):
+    ret = []
+    x = list(swn.senti_synsets(word))
+    for syn in x:
+        if syn.pos_score() > 0.4:
+            ret.append(str(syn.synset)+' Pos: '+str(syn.pos_score())+' Neg: '+str(syn.neg_score()))
+    return clean_senses(ret)
+def all_possible_negative_syn(word, pos=None):
+    ret = []
+    x = list(swn.senti_synsets(word))
+    for syn in x:
+        if syn.neg_score() > 0.4:
+            ret.append(str(syn.synset)+' Pos: '+str(syn.pos_score())+' Neg: '+str(syn.neg_score()))
+    return clean_senses(ret)
+def all_possible_neutral_syn(word, pos=None):
+    ret = []
+    x = list(swn.senti_synsets(word))
+    for syn in x:
+        if syn.obj_score() > 0.1:
+            ret.append(str(syn.synset)+' Pos: '+str(syn.pos_score())+' Neg: '+str(syn.neg_score())+' Obj: '+str(syn.obj_score()))
     return clean_senses(ret)
 
 def all_possible_antonyms(word, pos=None):
@@ -59,6 +87,8 @@ def all_possible_hyponyms(word, pos=None, depth=None):
     for syn in all_synsets(word, pos=pos):
         ret.extend([y for x in syn.hyponyms(recursive=True, depth=depth) for y in x.senses])
     return clean_senses(ret)
+# Takes an array of strings (words=['girl','woman']) and eventually a string (pos='NOUN')
+# Return ['madam', 'miss', ...]
 def all_possible_related(words, pos=None, depth=1):
     all_syns = [y for word in words for y in all_synsets(word, pos=pos)]
     # all_syns = [all_synsets(x, pos=pos) for x in words]
@@ -168,7 +198,7 @@ class TextGenerator(object):
             # print('ae')
             # print('\n'.join([tokenizer.decode(x) for x in to_pred]))
             # print()
-            to_pred = torch.tensor(to_pred, device=self.device).to(torch.int64)
+            to_pred = torch.tensor(to_pred, device=self.device)
             with torch.no_grad():
                 outputs = model(to_pred)[0]
             for i, current in enumerate(current_beam):
@@ -184,7 +214,7 @@ class TextGenerator(object):
                     new = [(current[0] + [int(x[0])], float(x[1]) + current[1]) for x in zip(cands_to_use, scores)]
                 else:
                     if forbid:
-                        v, top_preds = torch.topk(outputs[i, masked[size], self.with_space.to(torch.int64)], beam_size + 10)
+                        v, top_preds = torch.topk(outputs[i, masked[size], self.with_space], beam_size + 10)
                         top_preds = self.with_space[top_preds]
                     else:
                         v, top_preds = torch.topk(outputs[i, masked[size]], beam_size + 10)
@@ -234,6 +264,23 @@ class TextGenerator(object):
         except:
             new_ret = [(x[0], x[1], score - x[2]) for x in non_word if score - x[2] < threshold]
         return new_ret
+
+# Custom
+    def positive_syn(self, texts, word, threshold=5, pos=None, **kwargs):
+        options = all_possible_positive_syn(word, pos=pos)
+        return(options)
+        #print(options)
+        #return self.filter_options(texts, word, options, threshold)
+    def negative_syn(self, texts, word, threshold=5, pos=None, **kwargs):
+        options = all_possible_negative_syn(word, pos=pos)
+        return(options)
+        #print(options)
+        #return self.filter_options(texts, word, options, threshold)
+    def neutral_syn(self, texts, word, threshold=5, pos=None, **kwargs):
+        options = all_possible_neutral_syn(word, pos=pos)
+        return(options)
+        #print(options)
+        #return self.filter_options(texts, word, options, threshold)
 
     def more_general(self, texts, word, threshold=5, pos=None, **kwargs):
         options = all_possible_hypernyms(word, pos=pos)
