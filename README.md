@@ -15,6 +15,36 @@ Bibtex for citations:
  year = {2020}  
 ```
 
+## Using SentiWordNet 
+```
+editor.neutral('The girl see', 'girl')
+```
+
+> 
+["('daughter.n.01') Pos: 0.0 Neg: 0.0 Obj: 1.0",
+
+ "('girl.n.05') Pos: 0.0 Neg: 0.0 Obj: 1.0",
+ 
+ "('girlfriend.n.02') Pos: 0.0 Neg: 0.0 Obj: 1.0",
+ 
+ "('girl.n.01') Pos: 0.0 Neg: 0.0 Obj: 1.0"]
+
+```
+editor.positive('The girl is happy', 'happy')
+```
+>
+["('happy.a.01') Pos: 0.875 Neg: 0.0",
+
+"('felicitous.s.02') Pos: 0.75 Neg: 0.0",
+
+"('glad.s.02') Pos: 0.5 Neg: 0.0"]
+
+```
+editor.negative('The girl is mad', 'mad')
+```
+>
+["('brainsick.s.01') Pos: 0.0 Neg: 0.5"]
+
 ## API reference
 On [readthedocs](https://checklist-nlp.readthedocs.io/en/latest/)
 
