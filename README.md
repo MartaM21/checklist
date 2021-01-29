@@ -1,4 +1,4 @@
-# CheckList, with SentiWordNet
+# CheckList with SentiWordNet
 This repository contains the forked code of CheckList.
 
 References: 
