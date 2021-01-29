@@ -15,7 +15,7 @@ Bibtex for citations:
  year = {2020}  
 ```
 
-## Using SentiWordNet 
+## Using SentiWordNet suggestions  
 ```
 editor.neutral('The girl see', 'girl')
 ```
